@@ -347,6 +347,152 @@ app.get('/airdrops/names', async (req, res) => {
   }
 });
 
+// Endpoint completo com dados DeFiLlama - name, category, tvl, listed at, 1d change, 7d, 1m
+app.get('/protocols', async (req, res) => {
+  try {
+    const { limit, category, minTvl } = req.query;
+    
+    let airdrops = await getAirdropsWithCache();
+    
+    // Filtros
+    if (category) {
+      airdrops = airdrops.filter(a => 
+        a.category?.toLowerCase().includes(String(category).toLowerCase())
+      );
+    }
+    
+    if (minTvl) {
+      airdrops = airdrops.filter(a => {
+        const tvlNum = parseValue(a.tvl);
+        return tvlNum >= Number(minTvl);
+      });
+    }
+    
+    // Ordenar por TVL (maiores primeiro)
+    airdrops = airdrops.sort((a, b) => {
+      const aTvl = parseValue(a.tvl);
+      const bTvl = parseValue(b.tvl);
+      return bTvl - aTvl;
+    });
+    
+    if (limit) {
+      airdrops = airdrops.slice(0, Number(limit));
+    }
+    
+    // Retornar dados formatados
+    const protocols = airdrops.map(airdrop => ({
+      name: airdrop.name,
+      symbol: airdrop.symbol || 'N/A',
+      category: airdrop.category || 'DeFi',
+      tvl: airdrop.tvl || 'N/A',
+      listedAt: airdrop.listedAt || 'N/A',
+      change1d: airdrop.change1d || 'N/A',
+      change7d: airdrop.change7d || 'N/A',
+      change1m: airdrop.change1m || 'N/A',
+      chain: airdrop.chain || 'Multi-Chain',
+      mcap: airdrop.mcap || 'N/A',
+      logo: airdrop.logo || null,
+      url: airdrop.url || null
+    }));
+    
+    res.json(protocols);
+    
+  } catch (error) {
+    console.error('Erro na rota /protocols:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Endpoint para dados específicos que você pediu
+app.get('/data/complete', async (req, res) => {
+  try {
+    const { fields, limit = '20' } = req.query;
+    
+    let airdrops = await getAirdropsWithCache();
+    
+    // Ordenar por TVL
+    airdrops = airdrops.sort((a, b) => {
+      const aTvl = parseValue(a.tvl);
+      const bTvl = parseValue(b.tvl);
+      return bTvl - aTvl;
+    }).slice(0, Number(limit));
+    
+    // Se campos específicos foram solicitados
+    if (fields) {
+      const requestedFields = String(fields).split(',');
+      const filteredData = airdrops.map(airdrop => {
+        const obj: any = {};
+        
+        requestedFields.forEach(field => {
+          const key = field.trim().toLowerCase();
+          switch (key) {
+            case 'name':
+              obj.name = airdrop.name;
+              break;
+            case 'category':
+              obj.category = airdrop.category || 'DeFi';
+              break;
+            case 'tvl':
+              obj.tvl = airdrop.tvl || 'N/A';
+              break;
+            case 'listedat':
+            case 'listed_at':
+              obj.listedAt = airdrop.listedAt || 'N/A';
+              break;
+            case '1d':
+            case 'change1d':
+              obj.change1d = airdrop.change1d || 'N/A';
+              break;
+            case '7d':
+            case 'change7d':
+              obj.change7d = airdrop.change7d || 'N/A';
+              break;
+            case '1m':
+            case 'change1m':
+              obj.change1m = airdrop.change1m || 'N/A';
+              break;
+            case 'symbol':
+              obj.symbol = airdrop.symbol || 'N/A';
+              break;
+            case 'chain':
+              obj.chain = airdrop.chain || 'Multi-Chain';
+              break;
+            case 'mcap':
+              obj.mcap = airdrop.mcap || 'N/A';
+              break;
+          }
+        });
+        
+        return obj;
+      });
+      
+      res.json(filteredData);
+    } else {
+      // Retornar todos os dados
+      res.json(airdrops.map(airdrop => ({
+        name: airdrop.name,
+        category: airdrop.category || 'DeFi',
+        tvl: airdrop.tvl || 'N/A',
+        listedAt: airdrop.listedAt || 'N/A',
+        change1d: airdrop.change1d || 'N/A',
+        change7d: airdrop.change7d || 'N/A',
+        change1m: airdrop.change1m || 'N/A',
+        symbol: airdrop.symbol || 'N/A',
+        chain: airdrop.chain || 'Multi-Chain',
+        mcap: airdrop.mcap || 'N/A'
+      })));
+    }
+    
+  } catch (error) {
+    console.error('Erro na rota /data/complete:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
 // Middleware de erro global
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Erro não tratado:', error);
@@ -376,6 +522,8 @@ app.listen(port, async () => {
   console.log(`🎯 N8N Endpoint: http://localhost:${port}/n8n/best-airdrops`);
   console.log(`💎 Apenas Airdrops: http://localhost:${port}/airdrops`);
   console.log(`📝 Apenas Nomes: http://localhost:${port}/airdrops/names`);
+  console.log(`🚀 Protocolos DeFiLlama: http://localhost:${port}/protocols`);
+  console.log(`📈 Dados Completos: http://localhost:${port}/data/complete`);
   
   await initializeCache();
 });
