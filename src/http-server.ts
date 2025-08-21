@@ -528,6 +528,80 @@ app.listen(port, async () => {
   await initializeCache();
 });
 
+// Endpoints DexScreener
+app.get('/dexscreener/profiles', async (req, res) => {
+  try {
+    const { limit } = req.query;
+    
+    const profiles = await scraper.scrapeDexScreenerTokenProfiles();
+    
+    const result = limit ? profiles.slice(0, Number(limit)) : profiles;
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro na rota /dexscreener/profiles:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.get('/dexscreener/tokens', async (req, res) => {
+  try {
+    const { limit } = req.query;
+    
+    const tokens = await scraper.scrapeTopDexScreenerTokens();
+    
+    const result = limit ? tokens.slice(0, Number(limit)) : tokens;
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro na rota /dexscreener/tokens:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.get('/dexscreener/metrics', async (req, res) => {
+  try {
+    const { limit, sortBy } = req.query;
+    
+    let metrics = await scraper.getDexScreenerMetrics();
+    
+    // Ordenar por critério
+    if (sortBy === 'volume24h') {
+      metrics.sort((a, b) => {
+        const aVol = parseFloat(a.volume.h24.replace(/[$,BMK]/g, ''));
+        const bVol = parseFloat(b.volume.h24.replace(/[$,BMK]/g, ''));
+        return bVol - aVol;
+      });
+    } else if (sortBy === 'liquidity') {
+      metrics.sort((a, b) => {
+        const aLiq = parseFloat(a.liquidity.replace(/[$,BMK]/g, ''));
+        const bLiq = parseFloat(b.liquidity.replace(/[$,BMK]/g, ''));
+        return bLiq - aLiq;
+      });
+    } else if (sortBy === 'txns24h') {
+      metrics.sort((a, b) => b.txns.h24 - a.txns.h24);
+    }
+    
+    const result = limit ? metrics.slice(0, Number(limit)) : metrics;
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro na rota /dexscreener/metrics:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.get('/dexscreener/combined', async (req, res) => {
+  try {
+    const combinedData = await scraper.getCombinedCryptoData();
+    
+    res.json(combinedData);
+  } catch (error) {
+    console.error('Erro na rota /dexscreener/combined:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('🛑 Recebido SIGINT, fechando servidor...');
