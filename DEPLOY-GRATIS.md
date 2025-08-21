@@ -11,13 +11,19 @@
    ```
    Name: mcp-defillama-airdrops
    Environment: Node
-   Build Command: npm run build
+   Build Command: npm install && npx tsc
    Start Command: npm run start:server
    Plan: Free
+   Node Version: 18
    ```
 6. **Create Web Service**
 7. **Aguardar deploy** (5-10 minutos)
 8. **Sua URL:** `https://mcp-defillama-airdrops.onrender.com`
+
+### 🔧 Se der erro, use essas configurações:
+- **Build Command:** `npm ci && npx tsc`
+- **Start Command:** `node dist/http-server.js`
+- **Environment Variables:** `NODE_ENV=production`
 
 ### ✅ Pronto! API online 24/7
 
@@ -118,4 +124,36 @@ return { message: msg };
 ```bash
 curl https://SEU-APP.onrender.com/health
 curl https://SEU-APP.onrender.com/n8n/best-airdrops?limit=3
+```
+
+---
+
+## 🔧 TROUBLESHOOTING - Se der erro:
+
+### ❌ Erro: "código de saída: 127"
+**Solução:**
+- Build Command: `npm ci && npx tsc`
+- Start Command: `node dist/http-server.js`
+
+### ❌ Erro: "npm not found"
+**Solução:**
+- Selecionar Node Version: `18`
+- Build Command: `npm install && npm run build`
+
+### ❌ Erro: "Module not found"
+**Solução:**
+- Verificar se `package.json` está correto
+- Build Command: `npm ci --include=dev && npm run build`
+
+### ❌ Aplicação não responde
+**Solução:**
+1. Verificar logs no painel do Render
+2. Testar localmente: `npm run server`
+3. Start Command: `npm run start:server`
+
+### 🆘 Última opção - Deploy manual:
+Se nada funcionar, use essa configuração:
+```
+Build Command: npm install typescript @types/node @types/express @types/cors && npx tsc
+Start Command: node dist/http-server.js
 ```

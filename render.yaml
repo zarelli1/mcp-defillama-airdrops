@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mcp-defillama-airdrops
+    env: node
+    plan: free
+    buildCommand: npm install && npx tsc
+    startCommand: npm run start:server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    scaling:
+      minInstances: 1
+      maxInstances: 1

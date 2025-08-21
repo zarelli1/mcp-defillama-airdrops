@@ -5,11 +5,13 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npm install && npx tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "server": "tsx src/http-server.ts",
-    "start:server": "node dist/http-server.js"
+    "start:server": "node dist/http-server.js",
+    "render-build": "npm install && npm run build",
+    "render-start": "npm run start:server"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -26,6 +28,10 @@
     "@types/cors": "^2.8.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "keywords": ["mcp", "defillama", "airdrops", "crypto", "scraping"],
   "author": "Your Name",
