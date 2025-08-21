@@ -270,6 +270,83 @@ app.get('/n8n/best-airdrops', async (req, res) => {
   }
 });
 
+// Endpoint simples - apenas dados dos airdrops
+app.get('/airdrops', async (req, res) => {
+  try {
+    const { limit, active, chain } = req.query;
+    
+    let airdrops = await getAirdropsWithCache();
+    
+    // Filtros opcionais
+    if (active === 'true') {
+      airdrops = airdrops.filter(a => 
+        a.status?.toLowerCase().includes('active') || 
+        a.status?.toLowerCase().includes('ativo') ||
+        a.status?.toLowerCase() === 'tbd'
+      );
+    }
+    
+    if (chain) {
+      airdrops = airdrops.filter(a => 
+        a.chain?.toLowerCase().includes(String(chain).toLowerCase())
+      );
+    }
+    
+    // Ordenar por valor (maiores primeiro)
+    airdrops = airdrops.sort((a, b) => {
+      const aValue = parseValue(a.value);
+      const bValue = parseValue(b.value);
+      return bValue - aValue;
+    });
+    
+    // Limitar quantidade se especificado
+    if (limit) {
+      airdrops = airdrops.slice(0, Number(limit));
+    }
+    
+    // Retornar apenas a lista de airdrops
+    res.json(airdrops);
+    
+  } catch (error) {
+    console.error('Erro na rota /airdrops:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Endpoint super simples - apenas nomes dos airdrops
+app.get('/airdrops/names', async (req, res) => {
+  try {
+    const { limit = '10' } = req.query;
+    
+    let airdrops = await getAirdropsWithCache();
+    
+    // Filtrar apenas ativos e pegar os nomes
+    const names = airdrops
+      .filter(a => 
+        a.status?.toLowerCase().includes('active') || 
+        a.status?.toLowerCase().includes('ativo') ||
+        a.status?.toLowerCase() === 'tbd'
+      )
+      .sort((a, b) => {
+        const aValue = parseValue(a.value);
+        const bValue = parseValue(b.value);
+        return bValue - aValue;
+      })
+      .slice(0, Number(limit))
+      .map(a => a.name);
+    
+    res.json(names);
+    
+  } catch (error) {
+    console.error('Erro na rota /airdrops/names:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
 // Middleware de erro global
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Erro não tratado:', error);
@@ -297,6 +374,8 @@ app.listen(port, async () => {
   console.log(`🔗 Health check: http://localhost:${port}/health`);
   console.log(`📊 API Airdrops: http://localhost:${port}/api/airdrops`);
   console.log(`🎯 N8N Endpoint: http://localhost:${port}/n8n/best-airdrops`);
+  console.log(`💎 Apenas Airdrops: http://localhost:${port}/airdrops`);
+  console.log(`📝 Apenas Nomes: http://localhost:${port}/airdrops/names`);
   
   await initializeCache();
 });
