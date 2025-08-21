@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/http-server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["src/**"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/http-server.ts"
+    }
+  ],
+  "functions": {
+    "src/http-server.ts": {
+      "maxDuration": 10
+    }
+  }
+}
