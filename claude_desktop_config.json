@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "defillama-airdrops": {
+      "command": "node",
+      "args": ["/caminho/para/mcp-defillama-airdrops/dist/index.js"],
+      "env": {}
+    }
+  }
+}
